@@ -4,6 +4,8 @@ import starlight from '@astrojs/starlight';
 
 // https://astro.build/config
 export default defineConfig({
+	site: 'https://ryan-ajility.github.io',
+	base: '/excel-to-json',
 	integrations: [
 		starlight({
 			title: 'excel-to-json',

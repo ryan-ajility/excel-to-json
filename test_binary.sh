@@ -1,13 +1,13 @@
 #!/bin/bash
 
-# Test script for import_cascade_fields binary
+# Test script for excel-to-json binary
 
-echo "Testing import_cascade_fields binary..."
+echo "Testing excel-to-json binary..."
 echo "======================================="
 
 # Test 1: File not found
 echo -e "\nTest 1: File not found"
-./target/release/import_cascade_fields "nonexistent.xlsx" 2>/dev/null | jq -r '.error'
+./target/release/excel-to-json "nonexistent.xlsx" 2>/dev/null | jq -r '.error'
 
 # Test 2: Missing sheet
 echo -e "\nTest 2: Testing with a test file (will show sheet not found since we don't have a real Excel file)"
@@ -71,7 +71,7 @@ cat << 'EOF'
 $excelFilePath = '/path/to/Item Master Field Values.xlsx';
 $command = sprintf(
     '%s %s',
-    '/Users/ajility/Projects/rust/import_cascade_fields/target/release/import_cascade_fields',
+    '/Users/ajility/Projects/rust/excel-to-json/target/release/excel-to-json',
     escapeshellarg($excelFilePath)
 );
 

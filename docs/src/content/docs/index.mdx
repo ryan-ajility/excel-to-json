@@ -1,0 +1,122 @@
+---
+title: excel-to-json
+description: Fast, reliable Excel to JSON converter written in Rust
+template: splash
+hero:
+  title: excel-to-json
+  tagline: Extract data from Excel files with blazing speed and reliability. Perfect for developers who need a quick and easy way to integrate Excel data into their projects.
+  actions:
+    - text: Get Started
+      link: /getting-started/introduction/
+      icon: right-arrow
+    - text: View on GitHub
+      link: https://github.com/ryan-ajility/excel-to-json
+      icon: external
+      variant: minimal
+---
+
+import { Card, CardGrid, Tabs, TabItem } from '@astrojs/starlight/components';
+
+## Why excel-to-json?
+
+<CardGrid stagger>
+	<Card title="🚀 Blazing Fast" icon="rocket">
+		Built with Rust for maximum performance. Process large Excel files in milliseconds.
+	</Card>
+	<Card title="🛠️ Easy to Use" icon="seti:config">
+		Simple command-line interface that works out of the box. No complex configuration needed.
+	</Card>
+	<Card title="📦 Cross-Platform" icon="laptop">
+		Works on Windows, macOS, and Linux. Install once, use everywhere.
+	</Card>
+	<Card title="🔧 Developer Friendly" icon="puzzle">
+		Clean JSON output that's easy to parse and integrate into any programming language.
+	</Card>
+</CardGrid>
+
+## Quick Start
+
+Install excel-to-json and start converting files in seconds:
+
+<Tabs>
+	<TabItem label="macOS/Linux">
+		```bash
+		# Install with cargo
+		cargo install excel-to-json
+
+		# Convert an Excel file
+		excel-to-json data.xlsx
+		```
+	</TabItem>
+	<TabItem label="Windows">
+		```powershell
+		# Install with cargo
+		cargo install excel-to-json
+
+		# Convert an Excel file
+		excel-to-json.exe data.xlsx
+		```
+	</TabItem>
+</Tabs>
+
+## Features
+
+- ✅ **Multiple Sheet Support** - Process specific sheets or all sheets at once
+- ✅ **Smart Type Detection** - Automatically detects numbers, dates, and text
+- ✅ **Error Handling** - Graceful handling of malformed data with detailed error messages
+- ✅ **Metadata Output** - Get processing statistics and warnings
+- ✅ **Memory Efficient** - Streams data for optimal memory usage
+- ✅ **Unicode Support** - Full support for international characters
+
+## Use Cases
+
+<div class="feature-grid">
+	<div class="feature-card">
+		<h3>📊 Data Migration</h3>
+		<p>Quickly convert Excel reports and datasets to JSON for database imports or API consumption.</p>
+	</div>
+	<div class="feature-card">
+		<h3>🔄 Build Automation</h3>
+		<p>Integrate into CI/CD pipelines to automatically process Excel configuration files.</p>
+	</div>
+	<div class="feature-card">
+		<h3>🌐 Web Applications</h3>
+		<p>Convert user-uploaded Excel files to JSON for processing in web applications.</p>
+	</div>
+	<div class="feature-card">
+		<h3>📈 Data Analysis</h3>
+		<p>Extract Excel data for analysis in Python, R, or other data science tools.</p>
+	</div>
+</div>
+
+## Example Output
+
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "Product": "Widget A",
+      "Price": 19.99,
+      "Quantity": 100,
+      "InStock": true
+    },
+    {
+      "Product": "Widget B",
+      "Price": 29.99,
+      "Quantity": 50,
+      "InStock": true
+    }
+  ],
+  "metadata": {
+    "total_rows_processed": 2,
+    "valid_records": 2,
+    "invalid_records": 0,
+    "processing_time_ms": 15
+  }
+}
+```
+
+## Ready to Get Started?
+
+Check out our [installation guide](/getting-started/installation/) to begin using excel-to-json in your projects.

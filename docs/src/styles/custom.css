@@ -1,0 +1,151 @@
+/* Custom styles for excel-to-json documentation */
+
+/* WCAG-compliant color adjustments for light theme */
+:root[data-theme='light'],
+[data-theme='light'] ::backdrop {
+  /* Adjust text colors for better contrast while keeping Starlight's structure */
+  --sl-color-gray-2: hsl(224, 10%, 20%);  /* Darker for better contrast */
+  --sl-color-gray-3: hsl(224, 7%, 30%);   /* Darker for better contrast */
+  --sl-color-gray-4: hsl(224, 6%, 45%);   /* Darker for better contrast */
+  --sl-color-text: hsl(224, 10%, 20%);    /* Ensure main text has good contrast */
+  
+  /* Adjust accent colors for WCAG AA compliance */
+  --sl-color-accent: #008000;  /* Slightly darker blue for better contrast */
+  --sl-color-accent-high: hsl(234, 80%, 25%); /* Darker for links */
+}
+
+/* Hero section styling */
+.hero {
+  text-align: center;
+  padding: 3rem 0;
+  background: linear-gradient(135deg, var(--sl-color-accent-low) 0%, var(--sl-color-bg) 100%);
+  border-radius: 0.5rem;
+  margin-bottom: 2rem;
+}
+
+/* Code block enhancements */
+pre {
+  border-left: 3px solid var(--sl-color-accent);
+}
+
+/* Ensure code blocks have good contrast */
+pre code {
+  color: var(--sl-color-text);
+}
+
+/* Feature cards */
+.feature-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 1.5rem;
+  margin: 2rem 0;
+}
+
+.feature-card {
+  padding: 1.5rem;
+  background: var(--sl-color-gray-7, var(--sl-color-gray-6));
+  border-radius: 0.5rem;
+  border: 1px solid var(--sl-color-hairline-light);
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.feature-card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--sl-shadow-md);
+}
+
+.feature-card h3 {
+  color: var(--sl-color-white);
+  font-weight: 600;
+  margin-top: 0;
+}
+
+.feature-card p {
+  color: var(--sl-color-text);
+  line-height: 1.6;
+}
+
+/* Badge styling */
+.badge {
+  display: inline-block;
+  padding: 0.25rem 0.5rem;
+  background: var(--sl-color-accent);
+  color: var(--sl-color-text-invert);
+  border-radius: 0.25rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+
+/* Installation commands */
+.install-command {
+  background: var(--sl-color-gray-5);
+  color: var(--sl-color-gray-1);
+  padding: 1rem;
+  border-radius: 0.5rem;
+  font-family: var(--__sl-font-mono);
+  position: relative;
+}
+
+.install-command::before {
+  content: '$';
+  color: var(--sl-color-accent);
+  margin-right: 0.5rem;
+}
+
+.astro-m46x6ez3 span {
+  display: none;
+}
+
+/* Logo/title wrapper stays on the left */
+.title-wrapper.sl-flex {
+  flex: 0 0 auto;
+}
+
+/* Create a container for right-side items */
+.header.astro-kmkmnagf > :not(.title-wrapper) {
+  display: flex !important;
+  align-items: center;
+  gap: 1rem;
+  margin-left: auto !important;
+}
+
+/* Ensure right group items display properly on desktop */
+@media (min-width: 768px) {
+  .sl-hidden.md\:sl-flex.right-group {
+    display: flex !important;
+    align-items: center;
+    gap: 1rem;
+  }
+}
+
+/* Hide the title text in the header on the homepage (splash template) */
+body[data-pagefind-body] .site-title,
+body[class*="splash"] .site-title,
+[data-sl-current-page="/"] .site-title,
+.splash .site-title {
+  display: none !important;
+}
+
+/* On homepage, hide the duplicate title text next to logo */
+body[data-pagefind-body] header .sl-flex > :not(.sl-search):not(site-search):not([data-pagefind-ui]) span,
+body[class*="splash"] header .sl-flex > :not(.sl-search) span,
+[data-sl-current-page="/"] header .sl-flex > :not(.sl-search) span {
+  display: none;
+}
+
+/* Add padding to the hero content box to prevent text from touching edges */
+.hero.astro-jbfsktt5 {
+  padding: 3rem 2rem !important;
+  box-sizing: border-box;
+  color: white;
+}
+
+/* Make button icons white */
+.primary svg {
+  fill: white !important;
+  color: white !important;
+}
+
+.feature-card {
+  margin: 0;
+}

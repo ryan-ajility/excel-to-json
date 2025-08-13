@@ -1,0 +1,10 @@
+{
+  "success": true,
+  "records": [],
+  "metadata": {
+    "total_rows_processed": 10,
+    "valid_records": 10,
+    "invalid_records": 0,
+    "processing_time_ms": 50
+  }
+}

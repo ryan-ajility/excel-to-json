@@ -1,31 +1,36 @@
 <?php
 /**
- * Example PHP script demonstrating how to use the import_cascade_fields binary
- * with the PHP array output format
+ * Example PHP script demonstrating how to use the excel-to-json binary
+ * with JSON output format for both single and multiple sheets
  */
 
 // Configuration
-$binaryPath = './target/debug/import_cascade_fields'; // Adjust path as needed
-$excelFile = 'test_data.xlsx'; // Your Excel file
+$binaryPath = './target/debug/excel-to-json'; // Adjust path as needed
+$excelFile = 'resources/Item Master Field Values.xlsx'; // Your Excel file
 $sheetName = 'Cascade Fields';
 
 /**
- * Simple function to import cascade fields and return as PHP array
+ * Import data from single sheet
  */
-function importCascadeFields($binaryPath, $excelFile, $sheetName = 'Cascade Fields') {
-    // Build command with PHP output format
+function importExcelSheet($binaryPath, $excelFile, $sheetName = null) {
+    // Build command
     $command = sprintf(
-        '%s %s -s %s -o php 2>/dev/null',
+        '%s %s',
         escapeshellcmd($binaryPath),
-        escapeshellarg($excelFile),
-        escapeshellarg($sheetName)
+        escapeshellarg($excelFile)
     );
+    
+    if ($sheetName) {
+        $command .= ' -s ' . escapeshellarg($sheetName);
+    }
+    
+    $command .= ' 2>/dev/null';
     
     // Execute command
     $output = shell_exec($command);
     
     if ($output === null) {
-        throw new Exception('Failed to execute import_cascade_fields binary');
+        throw new Exception('Failed to execute excel-to-json binary');
     }
     
     // Parse JSON output
@@ -38,110 +43,213 @@ function importCascadeFields($binaryPath, $excelFile, $sheetName = 'Cascade Fiel
     return $result;
 }
 
-// Main execution
+/**
+ * Import data from multiple sheets
+ */
+function importMultipleSheets($binaryPath, $excelFile, $sheetNames = null, $allSheets = false) {
+    // Build command
+    $command = sprintf(
+        '%s %s',
+        escapeshellcmd($binaryPath),
+        escapeshellarg($excelFile)
+    );
+    
+    if ($allSheets) {
+        $command .= ' --all-sheets';
+    } elseif (is_array($sheetNames)) {
+        foreach ($sheetNames as $sheetName) {
+            $command .= ' -s ' . escapeshellarg($sheetName);
+        }
+    }
+    
+    $command .= ' 2>/dev/null';
+    
+    // Execute command
+    $output = shell_exec($command);
+    
+    if ($output === null) {
+        throw new Exception('Failed to execute excel-to-json binary');
+    }
+    
+    // Parse JSON output
+    $result = json_decode($output, true);
+    
+    if (json_last_error() !== JSON_ERROR_NONE) {
+        throw new Exception('Invalid JSON response: ' . json_last_error_msg());
+    }
+    
+    return $result;
+}
+
+// Example 1: Single Sheet Import
+echo "=== EXAMPLE 1: Single Sheet Import ===\n";
 try {
-    echo "Importing cascade fields from: $excelFile\n";
+    echo "Importing from: $excelFile\n";
     echo "Sheet: $sheetName\n";
-    echo str_repeat('-', 50) . "\n\n";
+    echo str_repeat('-', 50) . "\n";
     
-    // Import the data
-    $result = importCascadeFields($binaryPath, $excelFile, $sheetName);
+    // Import single sheet
+    $result = importExcelSheet($binaryPath, $excelFile, $sheetName);
     
-    // Check if successful
     if ($result['success']) {
-        $cascadeFields = $result['data'];
         $metadata = $result['metadata'];
         
         echo "✓ Import successful!\n";
         echo "  Total rows processed: {$metadata['total_rows_processed']}\n";
         echo "  Valid records: {$metadata['valid_records']}\n";
         echo "  Invalid records: {$metadata['invalid_records']}\n";
-        echo "  Processing time: {$metadata['processing_time_ms']}ms\n\n";
+        echo "  Processing time: {$metadata['processing_time_ms']}ms\n";
         
-        // Display warnings if any
-        if (!empty($metadata['warnings'])) {
-            echo "⚠ Warnings:\n";
-            foreach ($metadata['warnings'] as $warning) {
-                echo "  - $warning\n";
+        // Handle the data array - it will be array of sheet objects
+        if (!empty($result['data'])) {
+            $sheetData = $result['data'][0]; // First (and only) sheet
+            $rows = $sheetData['rows'];
+            
+            echo "\n  Sheet: {$sheetData['sheet']}\n";
+            echo "  Number of rows: " . count($rows) . "\n";
+            
+            // Show first few records
+            if (!empty($rows)) {
+                echo "\n  First 3 records:\n";
+                for ($i = 0; $i < min(3, count($rows)); $i++) {
+                    $row = $rows[$i];
+                    echo "    Record " . ($i + 1) . ": ";
+                    echo json_encode($row, JSON_UNESCAPED_UNICODE) . "\n";
+                }
             }
-            echo "\n";
         }
-        
-        // Display the data
-        echo "Data (showing first 5 records):\n";
-        echo str_repeat('-', 50) . "\n";
-        
-        $count = 0;
-        foreach ($cascadeFields as $index => $field) {
-            if ($count >= 5) break;
-            
-            echo "Record " . ($index + 1) . ":\n";
-            
-            // Each field is an associative array with the following keys
-            echo "  Main: {$field['main_label']} = {$field['main_value']}\n";
-            if ($field['main_description']) {
-                echo "    Description: {$field['main_description']}\n";
-            }
-            
-            echo "  Sub: {$field['sub_label']} = {$field['sub_value']}\n";
-            if ($field['sub_description']) {
-                echo "    Description: {$field['sub_description']}\n";
-            }
-            
-            echo "  Major: {$field['major_label']} = {$field['major_value']}\n";
-            if ($field['major_description']) {
-                echo "    Description: {$field['major_description']}\n";
-            }
-            
-            echo "  Minor: {$field['minor_label']} = {$field['minor_value']}\n";
-            if ($field['minor_description']) {
-                echo "    Description: {$field['minor_description']}\n";
-            }
-            
-            echo "  Timestamps: Created {$field['created_at']}, Updated {$field['updated_at']}\n";
-            echo "\n";
-            
-            $count++;
-        }
-        
-        if (count($cascadeFields) > 5) {
-            echo "... and " . (count($cascadeFields) - 5) . " more records\n";
-        }
-        
-        // Example: Process the data for your application
-        echo "\n" . str_repeat('-', 50) . "\n";
-        echo "Processing data for application use...\n\n";
-        
-        // Group by main value for analysis
-        $grouped = [];
-        foreach ($cascadeFields as $field) {
-            $mainValue = $field['main_value'];
-            if (!isset($grouped[$mainValue])) {
-                $grouped[$mainValue] = [];
-            }
-            $grouped[$mainValue][] = $field;
-        }
-        
-        echo "Data grouped by main value:\n";
-        foreach ($grouped as $mainValue => $fields) {
-            echo "  $mainValue: " . count($fields) . " records\n";
-        }
-        
     } else {
-        // Handle error
         echo "✗ Import failed!\n";
         echo "Error: {$result['error']}\n";
-        
-        if (!empty($result['data'])) {
-            echo "Details:\n";
-            print_r($result['data']);
-        }
     }
     
 } catch (Exception $e) {
     echo "✗ Exception occurred: " . $e->getMessage() . "\n";
-    exit(1);
 }
 
-echo "\n" . str_repeat('=', 50) . "\n";
-echo "Example complete!\n";
+echo "\n";
+
+// Example 2: Multiple Sheets Import
+echo "=== EXAMPLE 2: Multiple Sheets Import ===\n";
+try {
+    // Import multiple specific sheets
+    $sheetsToImport = ['Main', 'Sub', 'Cascade Fields'];
+    echo "Importing sheets: " . implode(', ', $sheetsToImport) . "\n";
+    echo str_repeat('-', 50) . "\n";
+    
+    $result = importMultipleSheets($binaryPath, $excelFile, $sheetsToImport);
+    
+    if ($result['success']) {
+        $metadata = $result['metadata'];
+        
+        echo "✓ Multi-sheet import successful!\n";
+        echo "  Total rows processed: {$metadata['total_rows_processed']}\n";
+        echo "  Valid records: {$metadata['valid_records']}\n";
+        echo "  Invalid records: {$metadata['invalid_records']}\n";
+        echo "  Processing time: {$metadata['processing_time_ms']}ms\n";
+        
+        if (!empty($metadata['warnings'])) {
+            echo "\n  ⚠ Warnings:\n";
+            foreach ($metadata['warnings'] as $warning) {
+                echo "    - $warning\n";
+            }
+        }
+        
+        // Process each sheet
+        echo "\n  Sheets processed:\n";
+        foreach ($result['data'] as $sheetData) {
+            $sheetName = $sheetData['sheet'];
+            $rows = $sheetData['rows'];
+            
+            echo "    - {$sheetName}: " . count($rows) . " rows\n";
+            
+            // Show sample data from each sheet
+            if (!empty($rows)) {
+                $sampleRow = $rows[0];
+                echo "      Sample columns: " . implode(', ', array_keys($sampleRow)) . "\n";
+            }
+        }
+    } else {
+        echo "✗ Multi-sheet import failed!\n";
+        echo "Error: {$result['error']}\n";
+    }
+    
+} catch (Exception $e) {
+    echo "✗ Exception occurred: " . $e->getMessage() . "\n";
+}
+
+echo "\n";
+
+// Example 3: Import All Sheets
+echo "=== EXAMPLE 3: Import All Sheets ===\n";
+try {
+    echo "Importing all sheets from: $excelFile\n";
+    echo str_repeat('-', 50) . "\n";
+    
+    $result = importMultipleSheets($binaryPath, $excelFile, null, true);
+    
+    if ($result['success']) {
+        $metadata = $result['metadata'];
+        
+        echo "✓ All sheets import successful!\n";
+        echo "  Total sheets: " . count($result['data']) . "\n";
+        echo "  Total rows processed: {$metadata['total_rows_processed']}\n";
+        echo "  Valid records: {$metadata['valid_records']}\n";
+        echo "  Invalid records: {$metadata['invalid_records']}\n";
+        echo "  Processing time: {$metadata['processing_time_ms']}ms\n";
+        
+        // List all sheets with their row counts
+        echo "\n  All sheets in workbook:\n";
+        $totalDataRows = 0;
+        
+        foreach ($result['data'] as $sheetData) {
+            $sheetName = $sheetData['sheet'];
+            $rowCount = count($sheetData['rows']);
+            $totalDataRows += $rowCount;
+            
+            echo "    - {$sheetName}: {$rowCount} data rows\n";
+        }
+        
+        echo "\n  Total data rows across all sheets: $totalDataRows\n";
+        
+        // Example: Process data by sheet type
+        echo "\n  Processing data by sheet...\n";
+        foreach ($result['data'] as $sheetData) {
+            $sheetName = $sheetData['sheet'];
+            $rows = $sheetData['rows'];
+            
+            if (!empty($rows)) {
+                // Example processing based on sheet name
+                switch (strtolower($sheetName)) {
+                    case 'cascade fields':
+                        echo "    → Processing cascade field definitions: " . count($rows) . " items\n";
+                        break;
+                    case 'main':
+                        echo "    → Processing main categories: " . count($rows) . " items\n";
+                        break;
+                    case 'sub':
+                        echo "    → Processing sub-categories: " . count($rows) . " items\n";
+                        break;
+                    default:
+                        echo "    → Processing {$sheetName}: " . count($rows) . " items\n";
+                        break;
+                }
+            }
+        }
+    } else {
+        echo "✗ All sheets import failed!\n";
+        echo "Error: {$result['error']}\n";
+    }
+    
+} catch (Exception $e) {
+    echo "✗ Exception occurred: " . $e->getMessage() . "\n";
+}
+
+echo "\n" . str_repeat('=', 60) . "\n";
+echo "All examples completed!\n";
+echo "\nTips for integration:\n";
+echo "- Use single sheet import for simple cases\n";
+echo "- Use multi-sheet import when you need specific sheets\n";
+echo "- Use all-sheets import for complete workbook processing\n";
+echo "- Always check the 'success' field before processing data\n";
+echo "- Handle warnings in the metadata for data quality insights\n";

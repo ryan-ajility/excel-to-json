@@ -16,7 +16,7 @@ use serde_json::{json, Value};
 /// # Example
 ///
 /// ```rust
-/// use import_cascade_fields::models::CascadeField;
+/// use excel_to_json::models::CascadeField;
 ///
 /// // Create a CascadeField from raw data
 /// let row_data = vec![
@@ -74,7 +74,7 @@ impl CascadeField {
     /// # Example
     ///
     /// ```rust
-    /// use import_cascade_fields::models::CascadeField;
+    /// use excel_to_json::models::CascadeField;
     ///
     /// // Valid row with all fields
     /// let complete_row = vec![
@@ -153,7 +153,7 @@ impl CascadeField {
     /// # Example
     ///
     /// ```rust
-    /// use import_cascade_fields::models::CascadeField;
+    /// use excel_to_json::models::CascadeField;
     ///
     /// // Valid record with main_value
     /// let valid_row = vec![
@@ -194,7 +194,7 @@ impl CascadeField {
     /// # Example
     ///
     /// ```rust
-    /// use import_cascade_fields::models::CascadeField;
+    /// use excel_to_json::models::CascadeField;
     ///
     /// // Complete keys
     /// let complete = vec![
@@ -253,7 +253,7 @@ impl CascadeField {
     /// # Example
     ///
     /// ```rust
-    /// use import_cascade_fields::models::CascadeField;
+    /// use excel_to_json::models::CascadeField;
     /// use serde_json::json;
     ///
     /// let row = vec![
@@ -290,6 +290,28 @@ impl CascadeField {
     }
 }
 
+/// Represents data from a single Excel sheet.
+///
+/// This struct contains the sheet name and all processed rows from that sheet.
+///
+/// # Example
+///
+/// ```rust
+/// use excel_to_json::models::{SheetData, CascadeField};
+///
+/// let sheet_data = SheetData {
+///     sheet: "Sheet1".to_string(),
+///     rows: vec![
+///         // ... CascadeField instances
+///     ],
+/// };
+/// ```
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct SheetData {
+    pub sheet: String,
+    pub rows: Vec<CascadeField>,
+}
+
 /// Represents the output structure for PHP integration.
 ///
 /// This struct encapsulates the complete result of a processing operation,
@@ -299,7 +321,7 @@ impl CascadeField {
 /// # Example
 ///
 /// ```rust
-/// use import_cascade_fields::models::{ProcessingResult, ProcessingMetadata, CascadeField};
+/// use excel_to_json::models::{ProcessingResult, ProcessingMetadata, CascadeField};
 ///
 /// // Create a successful result
 /// let records = vec![
@@ -336,6 +358,8 @@ pub struct ProcessingResult {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub records: Option<Vec<CascadeField>>,
     #[serde(skip_serializing_if = "Option::is_none")]
+    pub sheet_data: Option<Vec<SheetData>>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub error: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub details: Option<ErrorDetails>,
@@ -350,7 +374,7 @@ pub struct ProcessingResult {
 /// # Example
 ///
 /// ```rust
-/// use import_cascade_fields::models::ErrorDetails;
+/// use excel_to_json::models::ErrorDetails;
 ///
 /// let details = ErrorDetails {
 ///     file: "/path/to/file.xlsx".to_string(),
@@ -382,7 +406,7 @@ pub struct ErrorDetails {
 /// # Example
 ///
 /// ```rust
-/// use import_cascade_fields::models::ProcessingMetadata;
+/// use excel_to_json::models::ProcessingMetadata;
 ///
 /// let metadata = ProcessingMetadata {
 ///     total_rows_processed: 1000,
@@ -423,7 +447,7 @@ impl ProcessingResult {
     /// # Example
     ///
     /// ```rust
-    /// use import_cascade_fields::models::{ProcessingResult, ProcessingMetadata, CascadeField};
+    /// use excel_to_json::models::{ProcessingResult, ProcessingMetadata};
     ///
     /// let records = vec![
     ///     // ... processed CascadeField instances
@@ -445,6 +469,26 @@ impl ProcessingResult {
         ProcessingResult {
             success: true,
             records: Some(records),
+            sheet_data: None,
+            error: None,
+            details: None,
+            metadata,
+        }
+    }
+
+    /// Creates a successful processing result for multiple sheets.
+    ///
+    /// Use this method when the processing completes successfully for multiple sheets.
+    ///
+    /// # Arguments
+    ///
+    /// * `sheet_data` - Vector of SheetData containing processed records from each sheet
+    /// * `metadata` - Processing statistics and metrics
+    pub fn success_multi_sheet(sheet_data: Vec<SheetData>, metadata: ProcessingMetadata) -> Self {
+        ProcessingResult {
+            success: true,
+            records: None,
+            sheet_data: Some(sheet_data),
             error: None,
             details: None,
             metadata,
@@ -464,7 +508,7 @@ impl ProcessingResult {
     /// # Example
     ///
     /// ```rust
-    /// use import_cascade_fields::models::{ProcessingResult, ProcessingMetadata, ErrorDetails};
+    /// use excel_to_json::models::{ProcessingResult, ErrorDetails, ProcessingMetadata};
     ///
     /// let details = ErrorDetails {
     ///     file: "data.xlsx".to_string(),
@@ -495,6 +539,7 @@ impl ProcessingResult {
         ProcessingResult {
             success: false,
             records: None,
+            sheet_data: None,
             error: Some(error),
             details,
             metadata,
@@ -610,5 +655,101 @@ mod tests {
         assert!(!result.success);
         assert!(result.records.is_none());
         assert_eq!(result.error, Some("Test error".to_string()));
+    }
+    
+    #[test]
+    fn test_sheet_data_creation() {
+        let records = vec![
+            CascadeField::from_row(vec![
+                Some("Main".to_string()),
+                Some("M1".to_string()),
+                Some("Desc".to_string()),
+                Some("Sub".to_string()),
+                Some("S1".to_string()),
+                Some("SubDesc".to_string()),
+                Some("Major".to_string()),
+                Some("MAJ1".to_string()),
+                Some("MajDesc".to_string()),
+                Some("Minor".to_string()),
+                Some("MIN1".to_string()),
+                Some("MinDesc".to_string()),
+            ]).unwrap(),
+            CascadeField::from_row(vec![
+                Some("Main2".to_string()),
+                Some("M2".to_string()),
+                Some("Desc2".to_string()),
+                Some("Sub2".to_string()),
+                Some("S2".to_string()),
+                Some("SubDesc2".to_string()),
+                Some("Major2".to_string()),
+                Some("MAJ2".to_string()),
+                Some("MajDesc2".to_string()),
+                Some("Minor2".to_string()),
+                Some("MIN2".to_string()),
+                Some("MinDesc2".to_string()),
+            ]).unwrap(),
+        ];
+        
+        let sheet_data = SheetData {
+            sheet: "TestSheet".to_string(),
+            rows: records.clone(),
+        };
+        
+        assert_eq!(sheet_data.sheet, "TestSheet");
+        assert_eq!(sheet_data.rows.len(), 2);
+        assert_eq!(sheet_data.rows[0].main_value, Some("M1".to_string()));
+        assert_eq!(sheet_data.rows[1].main_value, Some("M2".to_string()));
+    }
+    
+    #[test]
+    fn test_processing_result_multi_sheet_success() {
+        let sheet1_records = vec![
+            CascadeField::from_row(vec![
+                Some("Main1".to_string()),
+                Some("M1".to_string()),
+                Some("Desc1".to_string()),
+                None, None, None, None, None, None, None, None, None,
+            ]).unwrap(),
+        ];
+        
+        let sheet2_records = vec![
+            CascadeField::from_row(vec![
+                Some("Main2".to_string()),
+                Some("M2".to_string()),
+                Some("Desc2".to_string()),
+                None, None, None, None, None, None, None, None, None,
+            ]).unwrap(),
+        ];
+        
+        let sheet_data = vec![
+            SheetData {
+                sheet: "Sheet1".to_string(),
+                rows: sheet1_records,
+            },
+            SheetData {
+                sheet: "Sheet2".to_string(),
+                rows: sheet2_records,
+            },
+        ];
+        
+        let metadata = ProcessingMetadata {
+            total_rows_processed: 2,
+            valid_records: 2,
+            invalid_records: 0,
+            processing_time_ms: 100,
+            warnings: None,
+        };
+        
+        let result = ProcessingResult::success_multi_sheet(sheet_data.clone(), metadata);
+        
+        assert!(result.success);
+        assert!(result.sheet_data.is_some());
+        assert!(result.records.is_none());
+        assert!(result.error.is_none());
+        
+        let result_sheet_data = result.sheet_data.unwrap();
+        assert_eq!(result_sheet_data.len(), 2);
+        assert_eq!(result_sheet_data[0].sheet, "Sheet1");
+        assert_eq!(result_sheet_data[1].sheet, "Sheet2");
     }
 }

@@ -8,7 +8,7 @@
 //! # Example
 //!
 //! ```rust,no_run
-//! use import_cascade_fields::excel_reader::ExcelReader;
+//! use excel_to_json::excel_reader::ExcelReader;
 //!
 //! # fn main() -> anyhow::Result<()> {
 //! let mut reader = ExcelReader::new("data.xlsx", "Cascade Fields".to_string())?;
@@ -36,7 +36,7 @@ use tracing::{debug, info, warn};
 /// # Example
 ///
 /// ```rust,no_run
-/// use import_cascade_fields::excel_reader::ExcelReader;
+/// use excel_to_json::excel_reader::ExcelReader;
 ///
 /// # fn main() -> anyhow::Result<()> {
 /// // Create a reader for a specific sheet
@@ -76,7 +76,7 @@ impl ExcelReader {
     /// # Example
     ///
     /// ```rust,no_run
-    /// use import_cascade_fields::excel_reader::ExcelReader;
+    /// use excel_to_json::excel_reader::ExcelReader;
     /// use std::path::Path;
     ///
     /// # fn main() -> anyhow::Result<()> {
@@ -120,7 +120,7 @@ impl ExcelReader {
     /// # Example
     ///
     /// ```rust,no_run
-    /// use import_cascade_fields::excel_reader::ExcelReader;
+    /// use excel_to_json::excel_reader::ExcelReader;
     ///
     /// # fn main() -> anyhow::Result<()> {
     /// let reader = ExcelReader::new("data.xlsx", String::new())?;
@@ -156,7 +156,7 @@ impl ExcelReader {
     /// # Example
     ///
     /// ```rust,no_run
-    /// use import_cascade_fields::excel_reader::ExcelReader;
+    /// use excel_to_json::excel_reader::ExcelReader;
     ///
     /// # fn main() -> anyhow::Result<()> {
     /// let mut reader = ExcelReader::new("data.xlsx", "Cascade Fields".to_string())?;
@@ -274,7 +274,7 @@ impl ExcelReader {
     /// # Example
     ///
     /// ```rust,no_run
-    /// # use import_cascade_fields::excel_reader::ExcelReader;
+    /// # use excel_to_json::excel_reader::ExcelReader;
     /// # fn main() -> anyhow::Result<()> {
     /// # let mut reader = ExcelReader::new("data.xlsx", "Sheet1".to_string())?;
     /// // The lookup tables structure:
@@ -408,7 +408,7 @@ impl ExcelReader {
     /// # Example
     ///
     /// ```rust,no_run
-    /// use import_cascade_fields::excel_reader::ExcelReader;
+    /// use excel_to_json::excel_reader::ExcelReader;
     ///
     /// # fn main() -> anyhow::Result<()> {
     /// let mut reader = ExcelReader::new("data.xlsx", "Cascade Fields".to_string())?;

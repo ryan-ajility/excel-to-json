@@ -1,5 +1,5 @@
 [package]
-name = "import_cascade_fields"
+name = "excel-to-json"
 version = "0.1.0"
 edition = "2021"
 

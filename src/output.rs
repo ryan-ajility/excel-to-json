@@ -1,24 +1,21 @@
-//! Output formatting module for the Cascade Fields import tool.
+//! Output formatting module for the Excel to JSON export tool.
 //!
-//! This module handles the formatting and output of processed data in various
-//! formats suitable for consumption by different systems, particularly PHP/Laravel
-//! applications.
+//! This module handles the formatting and output of processed Excel data
+//! as JSON for consumption by various systems.
 //!
-//! # Supported Formats
+//! # Supported Format
 //!
-//! - **JSON** - Standard JSON format for API responses
-//! - **CSV** - Comma-separated values for spreadsheet applications
-//! - **PHP Array** - JSON structure optimized for PHP consumption
+//! - **JSON** - Standard JSON format for API responses and data interchange
 //!
 //! # Example
 //!
 //! ```rust
-//! use import_cascade_fields::output::{OutputFormatter, OutputFormat};
-//! use import_cascade_fields::models::{ProcessingResult, ProcessingMetadata};
+//! use excel_to_json::output::{OutputFormatter, OutputFormat};
+//! use excel_to_json::models::{ProcessingResult, ProcessingMetadata};
 //!
 //! # fn main() -> anyhow::Result<()> {
 //! let result = ProcessingResult::success(
-//!     vec![],  // CascadeField records
+//!     vec![],  // Processed records
 //!     ProcessingMetadata {
 //!         total_rows_processed: 100,
 //!         valid_records: 95,
@@ -31,15 +28,11 @@
 //! // Format as JSON
 //! let json_output = OutputFormatter::format_output(&result, OutputFormat::Json)?;
 //! println!("JSON: {}", json_output);
-//!
-//! // Format as CSV
-//! let csv_output = OutputFormatter::format_output(&result, OutputFormat::Csv)?;
-//! println!("CSV: {}", csv_output);
 //! # Ok(())
 //! # }
 //! ```
 
-use crate::models::{CascadeField, ProcessingResult};
+use crate::models::ProcessingResult;
 use anyhow::Result;
 use serde_json::{self, json, Value};
 use std::io::Write;
@@ -47,32 +40,21 @@ use tracing::info;
 
 /// Output format options for processed data.
 ///
-/// Determines how the processing results will be formatted
-/// for output to different consumers.
+/// Currently only supports JSON output format.
 ///
 /// # Example
 ///
 /// ```rust
-/// use import_cascade_fields::output::OutputFormat;
+/// use excel_to_json::output::OutputFormat;
 /// use std::str::FromStr;
 ///
 /// // Parse from string
 /// let format = OutputFormat::from_str("json").unwrap();
 /// matches!(format, OutputFormat::Json);
-///
-/// // Parse case-insensitive
-/// let format = OutputFormat::from_str("CSV").unwrap();
-/// matches!(format, OutputFormat::Csv);
-///
-/// // Parse PHP format variations
-/// let format = OutputFormat::from_str("php").unwrap();
-/// matches!(format, OutputFormat::PhpArray);
 /// ```
 #[derive(Debug, Clone, Copy)]
 pub enum OutputFormat {
     Json,
-    Csv,
-    PhpArray,
 }
 
 impl std::str::FromStr for OutputFormat {
@@ -80,49 +62,43 @@ impl std::str::FromStr for OutputFormat {
     
     /// Parses an OutputFormat from a string.
     ///
-    /// Accepts various format names (case-insensitive):
-    /// - "json" → Json
-    /// - "csv" → Csv  
-    /// - "php", "phparray", "php-array" → PhpArray
+    /// Accepts "json" (case-insensitive)
     ///
     /// # Example
     ///
     /// ```rust
-    /// use import_cascade_fields::output::OutputFormat;
+    /// use excel_to_json::output::OutputFormat;
     /// use std::str::FromStr;
     ///
     /// assert!(matches!(OutputFormat::from_str("json"), Ok(OutputFormat::Json)));
-    /// assert!(matches!(OutputFormat::from_str("CSV"), Ok(OutputFormat::Csv)));
-    /// assert!(matches!(OutputFormat::from_str("php-array"), Ok(OutputFormat::PhpArray)));
+    /// assert!(matches!(OutputFormat::from_str("JSON"), Ok(OutputFormat::Json)));
     /// assert!(OutputFormat::from_str("invalid").is_err());
     /// ```
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         match s.to_lowercase().as_str() {
             "json" => Ok(OutputFormat::Json),
-            "csv" => Ok(OutputFormat::Csv),
-            "php" | "phparray" | "php-array" => Ok(OutputFormat::PhpArray),
-            _ => Err(format!("Unknown output format: {}", s)),
+            _ => Err(format!("Unknown output format: {}. Only 'json' is supported.", s)),
         }
     }
 }
 
-/// Handles output formatting for different targets.
+/// Handles output formatting for JSON export.
 ///
 /// The `OutputFormatter` provides static methods to format processing results
-/// into various output formats and write them to different destinations.
+/// as JSON and write them to different destinations.
 ///
 /// # Example
 ///
 /// ```rust
-/// use import_cascade_fields::output::{OutputFormatter, OutputFormat};
-/// use import_cascade_fields::models::{ProcessingResult, ProcessingMetadata, CascadeField};
+/// use excel_to_json::output::{OutputFormatter, OutputFormat};
+/// use excel_to_json::models::{ProcessingResult, ProcessingMetadata, CascadeField};
 /// use std::io::Write;
 ///
 /// # fn main() -> anyhow::Result<()> {
 /// // Create sample result
 /// let result = ProcessingResult::success(
 ///     vec![
-///         // CascadeField records
+///         // Processed records
 ///     ],
 ///     ProcessingMetadata {
 ///         total_rows_processed: 10,
@@ -149,26 +125,23 @@ impl std::str::FromStr for OutputFormat {
 pub struct OutputFormatter;
 
 impl OutputFormatter {
-    /// Formats the processing result according to the specified format.
-    ///
-    /// Routes the result to the appropriate formatter based on the
-    /// requested output format.
+    /// Formats the processing result as JSON.
     ///
     /// # Arguments
     ///
     /// * `result` - The processing result to format
-    /// * `format` - The desired output format
+    /// * `format` - The desired output format (currently only JSON)
     ///
     /// # Returns
     ///
-    /// * `Ok(String)` - Formatted output as a string
+    /// * `Ok(String)` - Formatted output as a JSON string
     /// * `Err` - If formatting fails
     ///
     /// # Example
     ///
     /// ```rust
-    /// use import_cascade_fields::output::{OutputFormatter, OutputFormat};
-    /// use import_cascade_fields::models::{ProcessingResult, ProcessingMetadata};
+    /// use excel_to_json::output::{OutputFormatter, OutputFormat};
+    /// use excel_to_json::models::{ProcessingResult, ProcessingMetadata};
     ///
     /// # fn main() -> anyhow::Result<()> {
     /// let result = ProcessingResult::success(
@@ -185,25 +158,19 @@ impl OutputFormatter {
     /// // Format as JSON
     /// let json = OutputFormatter::format_output(&result, OutputFormat::Json)?;
     /// assert!(json.contains("success"));
-    ///
-    /// // Format as CSV
-    /// let csv = OutputFormatter::format_output(&result, OutputFormat::Csv)?;
-    /// assert!(csv.contains("main_label,main_value"));
     /// # Ok(())
     /// # }
     /// ```
     pub fn format_output(result: &ProcessingResult, format: OutputFormat) -> Result<String> {
         match format {
             OutputFormat::Json => Self::format_json(result),
-            OutputFormat::Csv => Self::format_csv(result),
-            OutputFormat::PhpArray => Self::format_php_array(result),
         }
     }
     
-    /// Formats the result as JSON for PHP consumption.
+    /// Formats the result as JSON.
     ///
-    /// Creates a standard JSON representation of the processing result,
-    /// including all records, metadata, and error information.
+    /// Creates a JSON representation with all records converted to a generic
+    /// format where None values become empty strings for compatibility.
     ///
     /// # Arguments
     ///
@@ -213,213 +180,19 @@ impl OutputFormatter {
     ///
     /// Pretty-printed JSON string
     ///
-    /// # JSON Structure
-    ///
-    /// ```json
-    /// {
-    ///   "success": true,
-    ///   "records": [...],
-    ///   "metadata": {
-    ///     "total_rows_processed": 100,
-    ///     "valid_records": 95,
-    ///     "invalid_records": 5,
-    ///     "processing_time_ms": 150
-    ///   }
-    /// }
-    /// ```
-    fn format_json(result: &ProcessingResult) -> Result<String> {
-        let json = serde_json::to_string_pretty(result)?;
-        info!("Formatted output as JSON ({} bytes)", json.len());
-        Ok(json)
-    }
-    
-    /// Formats the result as CSV.
-    ///
-    /// Creates a CSV representation of the CascadeField records.
-    /// Error results produce a simple status CSV.
-    ///
-    /// # Arguments
-    ///
-    /// * `result` - The processing result to format
-    ///
-    /// # Returns
-    ///
-    /// CSV-formatted string with headers and data rows
-    ///
-    /// # CSV Format
-    ///
-    /// ```text
-    /// main_label,main_value,main_description,sub_label,sub_value,...
-    /// "Category A","CAT001","Description",...
-    /// ```
-    ///
-    /// # Example
-    ///
-    /// ```rust
-    /// use import_cascade_fields::models::{CascadeField, ProcessingResult, ProcessingMetadata};
-    /// use import_cascade_fields::output::{OutputFormatter, OutputFormat};
-    ///
-    /// # fn main() -> anyhow::Result<()> {
-    /// let records = vec![
-    ///     CascadeField::from_row(vec![
-    ///         Some("Label".to_string()),
-    ///         Some("VAL001".to_string()),
-    ///         None, None, None, None, None, None, None, None, None, None,
-    ///     ]).unwrap(),
-    /// ];
-    ///
-    /// let result = ProcessingResult::success(
-    ///     records,
-    ///     ProcessingMetadata {
-    ///         total_rows_processed: 1,
-    ///         valid_records: 1,
-    ///         invalid_records: 0,
-    ///         processing_time_ms: 10,
-    ///         warnings: None,
-    ///     },
-    /// );
-    ///
-    /// let csv = OutputFormatter::format_output(&result, OutputFormat::Csv)?;
-    /// assert!(csv.contains("main_label,main_value"));
-    /// assert!(csv.contains("Label,VAL001"));
-    /// # Ok(())
-    /// # }
-    /// ```
-    fn format_csv(result: &ProcessingResult) -> Result<String> {
-        if !result.success {
-            // For errors, return a simple CSV with error information
-            return Ok(format!("status,error\nfailed,\"{}\"", 
-                result.error.as_ref().unwrap_or(&"Unknown error".to_string())));
-        }
-        
-        let mut csv_output = String::new();
-        
-        // Write CSV header
-        csv_output.push_str("main_label,main_value,main_description,");
-        csv_output.push_str("sub_label,sub_value,sub_description,");
-        csv_output.push_str("major_label,major_value,major_description,");
-        csv_output.push_str("minor_label,minor_value,minor_description\n");
-        
-        // Write records
-        if let Some(records) = &result.records {
-            for record in records {
-                csv_output.push_str(&Self::format_csv_row(record));
-                csv_output.push('\n');
-            }
-        }
-        
-        info!("Formatted output as CSV ({} bytes)", csv_output.len());
-        Ok(csv_output)
-    }
-    
-    /// Formats a single CascadeField as a CSV row.
-    ///
-    /// Converts all fields to CSV format with proper escaping.
-    ///
-    /// # Arguments
-    ///
-    /// * `field` - The CascadeField to format
-    ///
-    /// # Returns
-    ///
-    /// CSV-formatted row as a string
-    fn format_csv_row(field: &CascadeField) -> String {
-        format!(
-            "{},{},{},{},{},{},{},{},{},{},{},{}",
-            Self::escape_csv(&field.main_label),
-            Self::escape_csv(&field.main_value),
-            Self::escape_csv(&field.main_description),
-            Self::escape_csv(&field.sub_label),
-            Self::escape_csv(&field.sub_value),
-            Self::escape_csv(&field.sub_description),
-            Self::escape_csv(&field.major_label),
-            Self::escape_csv(&field.major_value),
-            Self::escape_csv(&field.major_description),
-            Self::escape_csv(&field.minor_label),
-            Self::escape_csv(&field.minor_value),
-            Self::escape_csv(&field.minor_description)
-        )
-    }
-    
-    /// Escapes a CSV field value.
-    ///
-    /// Properly escapes strings for CSV format:
-    /// - Quotes strings containing commas, quotes, or newlines
-    /// - Escapes internal quotes by doubling them
-    /// - Returns empty string for None values
-    ///
-    /// # Arguments
-    ///
-    /// * `value` - Optional string to escape
-    ///
-    /// # Returns
-    ///
-    /// Properly escaped CSV field value
-    ///
-    /// # Example
-    ///
-    /// ```rust
-    /// # fn escape_csv(value: &Option<String>) -> String {
-    /// #     match value {
-    /// #         Some(s) => {
-    /// #             if s.contains(',') || s.contains('"') || s.contains('\n') {
-    /// #                 format!("\"{}\"", s.replace('"', "\"\""))
-    /// #             } else {
-    /// #                 s.clone()
-    /// #             }
-    /// #         },
-    /// #         None => String::new(),
-    /// #     }
-    /// # }
-    /// // Simple value
-    /// assert_eq!(escape_csv(&Some("test".to_string())), "test");
-    ///
-    /// // Value with comma
-    /// assert_eq!(escape_csv(&Some("test,value".to_string())), "\"test,value\"");
-    ///
-    /// // Value with quotes
-    /// assert_eq!(escape_csv(&Some("test\"value".to_string())), "\"test\"\"value\"");
-    ///
-    /// // None value
-    /// assert_eq!(escape_csv(&None), "");
-    /// ```
-    fn escape_csv(value: &Option<String>) -> String {
-        match value {
-            Some(s) => {
-                if s.contains(',') || s.contains('"') || s.contains('\n') {
-                    format!("\"{}\"", s.replace('"', "\"\""))
-                } else {
-                    s.clone()
-                }
-            },
-            None => String::new(),
-        }
-    }
-    
-    /// Formats the result as a PHP-compatible array of arrays.
-    ///
-    /// Creates a JSON structure optimized for PHP/Laravel consumption,
-    /// with all None values converted to empty strings.
-    ///
-    /// # Arguments
-    ///
-    /// * `result` - The processing result to format
-    ///
-    /// # Returns
-    ///
-    /// JSON string formatted for PHP consumption
-    ///
-    /// # PHP Array Structure
+    /// # JSON Structure for Multi-Sheet
     ///
     /// ```json
     /// {
     ///   "success": true,
     ///   "data": [
     ///     {
-    ///       "main_label": "Category",
-    ///       "main_value": "CAT001",
-    ///       "main_description": "",
-    ///       // ... all fields with empty strings for null
+    ///       "sheet": "Sheet1",
+    ///       "rows": [...]
+    ///     },
+    ///     {
+    ///       "sheet": "Sheet2",
+    ///       "rows": [...]
     ///     }
     ///   ],
     ///   "metadata": {
@@ -430,44 +203,9 @@ impl OutputFormatter {
     ///   }
     /// }
     /// ```
-    ///
-    /// # Example
-    ///
-    /// ```rust
-    /// use import_cascade_fields::models::{CascadeField, ProcessingResult, ProcessingMetadata};
-    /// use import_cascade_fields::output::{OutputFormatter, OutputFormat};
-    ///
-    /// # fn main() -> anyhow::Result<()> {
-    /// let records = vec![
-    ///     CascadeField::from_row(vec![
-    ///         Some("Label".to_string()),
-    ///         Some("VAL001".to_string()),
-    ///         None,  // Will become empty string in PHP
-    ///         None, None, None, None, None, None, None, None, None,
-    ///     ]).unwrap(),
-    /// ];
-    ///
-    /// let result = ProcessingResult::success(
-    ///     records,
-    ///     ProcessingMetadata {
-    ///         total_rows_processed: 1,
-    ///         valid_records: 1,
-    ///         invalid_records: 0,
-    ///         processing_time_ms: 10,
-    ///         warnings: None,
-    ///     },
-    /// );
-    ///
-    /// let php_output = OutputFormatter::format_output(&result, OutputFormat::PhpArray)?;
-    /// assert!(php_output.contains("success"));
-    /// assert!(php_output.contains("data"));
-    /// assert!(php_output.contains("main_description"));  // None becomes ""
-    /// # Ok(())
-    /// # }
-    /// ```
-    fn format_php_array(result: &ProcessingResult) -> Result<String> {
+    fn format_json(result: &ProcessingResult) -> Result<String> {
         if !result.success {
-            // For errors, return an error structure that PHP can handle
+            // For errors, return an error structure
             let error_response = json!({
                 "success": false,
                 "error": result.error.as_ref().unwrap_or(&"Unknown error".to_string()),
@@ -476,20 +214,32 @@ impl OutputFormatter {
             return Ok(serde_json::to_string_pretty(&error_response)?);
         }
         
-        // Convert records to array of PHP-compatible associative arrays
-        let php_array: Vec<Value> = result.records
-            .as_ref()
-            .map(|records| {
-                records.iter()
-                    .map(|record| record.to_php_array())
-                    .collect()
-            })
-            .unwrap_or_else(Vec::new);
+        // Check if this is a multi-sheet result
+        let data = if let Some(sheet_data) = &result.sheet_data {
+            // Format multi-sheet data
+            sheet_data.iter()
+                .map(|sheet| {
+                    json!({
+                        "sheet": sheet.sheet,
+                        "rows": sheet.rows.iter()
+                            .map(|record| record.to_php_array())
+                            .collect::<Vec<Value>>()
+                    })
+                })
+                .collect::<Vec<Value>>()
+        } else if let Some(records) = &result.records {
+            // Format single-sheet data (backwards compatibility)
+            records.iter()
+                .map(|record| record.to_php_array())
+                .collect()
+        } else {
+            Vec::new()
+        };
         
         // Create the response structure
         let response = json!({
             "success": true,
-            "data": php_array,
+            "data": data,
             "metadata": {
                 "total_rows_processed": result.metadata.total_rows_processed,
                 "valid_records": result.metadata.valid_records,
@@ -500,7 +250,7 @@ impl OutputFormatter {
         });
         
         let json = serde_json::to_string_pretty(&response)?;
-        info!("Formatted output as PHP array ({} bytes)", json.len());
+        info!("Formatted output as JSON ({} bytes)", json.len());
         Ok(json)
     }
     
@@ -521,7 +271,7 @@ impl OutputFormatter {
     /// # Example
     ///
     /// ```rust,no_run
-    /// use import_cascade_fields::output::OutputFormatter;
+    /// use excel_to_json::output::OutputFormatter;
     ///
     /// # fn main() -> anyhow::Result<()> {
     /// let output = r#"{
@@ -557,7 +307,7 @@ impl OutputFormatter {
     /// # Example
     ///
     /// ```rust,no_run
-    /// use import_cascade_fields::output::OutputFormatter;
+    /// use excel_to_json::output::OutputFormatter;
     ///
     /// # fn main() -> anyhow::Result<()> {
     /// let output = "main_label,main_value\nCategory,CAT001";
@@ -589,8 +339,8 @@ impl OutputFormatter {
     /// # Example
     ///
     /// ```rust
-    /// use import_cascade_fields::models::{ProcessingResult, ProcessingMetadata};
-    /// use import_cascade_fields::output::OutputFormatter;
+    /// use excel_to_json::models::{ProcessingResult, ProcessingMetadata};
+    /// use excel_to_json::output::OutputFormatter;
     ///
     /// // Success case
     /// let result = ProcessingResult::success(

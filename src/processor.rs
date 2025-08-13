@@ -7,8 +7,8 @@
 //! # Example
 //!
 //! ```rust
-//! use import_cascade_fields::processor::DataProcessor;
-//! use import_cascade_fields::models::CascadeField;
+//! use excel_to_json::processor::DataProcessor;
+//! use excel_to_json::models::CascadeField;
 //!
 //! # fn main() -> anyhow::Result<()> {
 //! let mut processor = DataProcessor::new();
@@ -44,7 +44,7 @@ use tracing::{debug, info, warn};
 /// # Example
 ///
 /// ```rust
-/// use import_cascade_fields::processor::DataProcessor;
+/// use excel_to_json::processor::DataProcessor;
 ///
 /// # fn main() -> anyhow::Result<()> {
 /// // Create a new processor
@@ -83,7 +83,7 @@ impl DataProcessor {
     /// # Example
     ///
     /// ```rust
-    /// use import_cascade_fields::processor::DataProcessor;
+    /// use excel_to_json::processor::DataProcessor;
     ///
     /// let processor = DataProcessor::new();
     /// // Processor is ready to process Excel rows
@@ -115,7 +115,7 @@ impl DataProcessor {
     /// # Example
     ///
     /// ```rust
-    /// use import_cascade_fields::processor::DataProcessor;
+    /// use excel_to_json::processor::DataProcessor;
     ///
     /// # fn main() -> anyhow::Result<()> {
     /// let mut processor = DataProcessor::new();
@@ -238,8 +238,8 @@ impl DataProcessor {
     /// # Example
     ///
     /// ```rust
-    /// use import_cascade_fields::models::CascadeField;
-    /// use import_cascade_fields::processor::DataProcessor;
+    /// use excel_to_json::models::CascadeField;
+    /// use excel_to_json::processor::DataProcessor;
     ///
     /// let processor = DataProcessor::new();
     ///
@@ -293,8 +293,8 @@ impl DataProcessor {
     /// # Example
     ///
     /// ```rust
-    /// use import_cascade_fields::models::CascadeField;
-    /// use import_cascade_fields::processor::DataProcessor;
+    /// use excel_to_json::models::CascadeField;
+    /// use excel_to_json::processor::DataProcessor;
     ///
     /// // Create a mix of complete and incomplete records
     /// let records = vec![
@@ -353,8 +353,8 @@ impl DataProcessor {
     /// # Example
     ///
     /// ```rust
-    /// use import_cascade_fields::models::CascadeField;
-    /// use import_cascade_fields::processor::DataProcessor;
+    /// use excel_to_json::models::CascadeField;
+    /// use excel_to_json::processor::DataProcessor;
     ///
     /// // Create records with different main values
     /// let records = vec![
